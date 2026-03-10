@@ -55,7 +55,6 @@ Also you can create attachment using PUT method, in this case you do not need to
 .. sourcecode:: python
 
       import requests
-      import urllib2
       from contextlib import closing
       import json
 
