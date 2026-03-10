@@ -58,7 +58,7 @@ Also you can create attachment using PUT method, in this case you do not need to
       from contextlib import closing
       import json
 
-      url_dst = 'http://dev.nextgis.com/sandbox/api'
+      url_dst = 'http://sandbox.nextgis.com/api'
       ngw_creds = ('administrator', 'demodemo')
       feature_dst = '/resource/' + '1501' + '/feature/'   #layer id
       new_id = '/33'          #feature id
