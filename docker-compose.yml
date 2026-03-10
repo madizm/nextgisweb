@@ -28,10 +28,12 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: nextgisweb-app
+    user: root
     restart: unless-stopped
     depends_on:
       db:
         condition: service_healthy
+    entrypoint: /docker/entrypoint.sh
     environment:
       # Database connection
       NGW_DATABASE_URL: postgresql://nextgisweb:${DB_PASSWORD:-nextgisweb_secret_password}@db:5432/nextgisweb
@@ -40,24 +42,27 @@ services:
       NGW_CACHE_DIR: /var/nextgisweb/cache
       NGW_DATA_DIR: /var/nextgisweb/data
       NGW_LOG_LEVEL: ${NGW_LOG_LEVEL:-INFO}
+      # Config file location
+      NEXTGISWEB_CONFIG: /etc/nextgisweb/config.local.cfg
       # Optional: Sentry for error tracking
       # NGW_SENTRY_DSN: ${SENTRY_DSN:-}
     volumes:
-      - nextgisweb_data:/var/nextgisweb
+      - nextgisweb_data:/var/nextgisweb/data
+      - nextgisweb_cache:/var/nextgisweb/cache
       - ./docker/config:/etc/nextgisweb:ro
+      - ./docker/entrypoint.sh:/docker/entrypoint.sh:ro
     ports:
       - "${APP_PORT:-8080}:8080"
     healthcheck:
-      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8080')"]
+      test: ["CMD-SHELL", "curl -sf http://localhost:8080/ || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 60s
+      start_period: 120s
     networks:
       - nextgisweb-network
     command: >
-      sh -c "nextgisweb-config initialize &&
-             python3 -m waitress --host=0.0.0.0 --port=8080 nextgisweb:main"
+      nextgisweb server --host 0.0.0.0 --port 8080
 
   # Optional: Nginx reverse proxy (uncomment for production)
   # nginx:
@@ -79,6 +84,8 @@ volumes:
   postgres_data:
     driver: local
   nextgisweb_data:
+    driver: local
+  nextgisweb_cache:
     driver: local
 
 networks:
